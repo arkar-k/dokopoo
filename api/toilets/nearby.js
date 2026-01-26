@@ -121,7 +121,7 @@ export default async function handler(req, res) {
         rank_score: rankScore(t.distance_m, t.quality_score, t.positive_percentage, t.review_count)
       }))
       .sort((a, b) => b.rank_score - a.rank_score)
-      .slice(0, 3);
+      .slice(0, 5);
 
     const enriched = await Promise.all(ranked.map(t => enrichWithGeocode(t)));
 

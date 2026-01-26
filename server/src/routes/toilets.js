@@ -49,7 +49,7 @@ async function enrichWithGeocode(toilet) {
 
 /**
  * GET /api/toilets/nearby?lat=...&lng=...&radius=500
- * Returns top 3 toilets ranked by distance + quality.
+ * Returns top 5 toilets ranked by distance + quality.
  * Auto-expands radius if no results found within initial radius.
  */
 router.get('/nearby', async (req, res) => {
@@ -113,7 +113,7 @@ router.get('/nearby', async (req, res) => {
         rank_score: rankScore(t.distance_m, t.quality_score, t.positive_percentage, t.review_count)
       }))
       .sort((a, b) => b.rank_score - a.rank_score)
-      .slice(0, 3);
+      .slice(0, 5);
 
     // Reverse geocode toilets missing address/building info
     const enriched = await Promise.all(ranked.map(t => enrichWithGeocode(t)));
