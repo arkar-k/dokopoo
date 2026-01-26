@@ -32,17 +32,22 @@ export function calculateQualityScore(toilet) {
 
 /**
  * Rank toilets by combined distance and quality.
- * distance_m: distance in meters
- * quality_score: 0-10 score
- *
- * Returns a combined score where higher is better.
+ * Blends metadata quality_score with real user ratings as reviews accumulate.
+ * At 0 reviews: 100% metadata. At 10+ reviews: 100% user ratings.
  */
-export function rankScore(distance_m, quality_score) {
+export function rankScore(distance_m, quality_score, positive_percentage, review_count) {
   // Normalize distance: 0m = 1.0, 500m = 0.0, >500m negative
   const distanceScore = Math.max(0, 1 - distance_m / 500);
 
-  // Normalize quality: 0-10 → 0-1
-  const qualityNorm = (quality_score || 5) / 10;
+  // Blend metadata quality with real user reviews
+  // Need at least 5 reviews before user ratings influence ranking
+  const metaQuality = (quality_score || 5) / 10;
+  const count = review_count || 0;
+  if (count < 5) return distanceScore * 0.4 + metaQuality * 0.6;
+
+  const userQuality = (positive_percentage || 0) / 100;
+  const reviewWeight = Math.min(count / 10, 1);
+  const qualityNorm = metaQuality * (1 - reviewWeight) + userQuality * reviewWeight;
 
   // Weight: 40% distance, 60% quality
   return distanceScore * 0.4 + qualityNorm * 0.6;

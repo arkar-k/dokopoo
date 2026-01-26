@@ -5,9 +5,14 @@ const pool = new pg.Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-function rankScore(distance_m, quality_score) {
+function rankScore(distance_m, quality_score, positive_percentage, review_count) {
   const distanceScore = Math.max(0, 1 - distance_m / 500);
-  const qualityNorm = (quality_score || 5) / 10;
+  const metaQuality = (quality_score || 5) / 10;
+  const count = review_count || 0;
+  if (count < 5) return distanceScore * 0.4 + metaQuality * 0.6;
+  const userQuality = (positive_percentage || 0) / 100;
+  const reviewWeight = Math.min(count / 10, 1);
+  const qualityNorm = metaQuality * (1 - reviewWeight) + userQuality * reviewWeight;
   return distanceScore * 0.4 + qualityNorm * 0.6;
 }
 
@@ -83,7 +88,7 @@ export default async function handler(req, res) {
           is_free, is_accessible, has_baby_change, is_gender_neutral,
           is_indoor, venue_type, building_name, address, floor_level,
           opening_hours, status,
-          quality_score, average_rating, review_count,
+          quality_score, positive_percentage, review_count,
           ST_Distance(
             geom::geography,
             ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
@@ -113,7 +118,7 @@ export default async function handler(req, res) {
         ...t,
         distance_m: Math.round(t.distance_m),
         walk_time_min: Math.max(1, Math.round(t.distance_m / 80)),
-        rank_score: rankScore(t.distance_m, t.quality_score)
+        rank_score: rankScore(t.distance_m, t.quality_score, t.positive_percentage, t.review_count)
       }))
       .sort((a, b) => b.rank_score - a.rank_score)
       .slice(0, 3);

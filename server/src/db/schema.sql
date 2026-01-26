@@ -29,21 +29,23 @@ CREATE TABLE IF NOT EXISTS toilets (
 CREATE INDEX IF NOT EXISTS idx_toilets_geom ON toilets USING GIST(geom);
 CREATE INDEX IF NOT EXISTS idx_toilets_status ON toilets(status);
 
+DROP TABLE IF EXISTS reviews;
+
 CREATE TABLE IF NOT EXISTS reviews (
   id SERIAL PRIMARY KEY,
   toilet_id INTEGER REFERENCES toilets(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL,
-  user_name TEXT,
-  rating_cleanliness INTEGER CHECK (rating_cleanliness BETWEEN 1 AND 5),
-  rating_accessibility INTEGER CHECK (rating_accessibility BETWEEN 1 AND 5),
-  rating_availability INTEGER CHECK (rating_availability BETWEEN 1 AND 5),
-  comment TEXT,
+  fingerprint TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating IN (0, 1)),
+  comment TEXT CHECK (char_length(comment) <= 200),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_toilet ON reviews(toilet_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_fingerprint ON reviews(fingerprint, toilet_id);
 
 -- Add new columns to existing tables (safe to re-run)
 ALTER TABLE toilets ADD COLUMN IF NOT EXISTS building_name TEXT;
 ALTER TABLE toilets ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE toilets ADD COLUMN IF NOT EXISTS floor_level TEXT;
+ALTER TABLE toilets ADD COLUMN IF NOT EXISTS positive_percentage DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE toilets DROP COLUMN IF EXISTS average_rating;

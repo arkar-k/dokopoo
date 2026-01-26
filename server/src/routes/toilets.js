@@ -79,7 +79,7 @@ router.get('/nearby', async (req, res) => {
           is_free, is_accessible, has_baby_change, is_gender_neutral,
           is_indoor, venue_type, building_name, address, floor_level,
           opening_hours, status,
-          quality_score, average_rating, review_count,
+          quality_score, positive_percentage, review_count,
           ST_Distance(
             geom::geography,
             ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
@@ -110,7 +110,7 @@ router.get('/nearby', async (req, res) => {
         ...t,
         distance_m: Math.round(t.distance_m),
         walk_time_min: Math.max(1, Math.round(t.distance_m / 80)),
-        rank_score: rankScore(t.distance_m, t.quality_score)
+        rank_score: rankScore(t.distance_m, t.quality_score, t.positive_percentage, t.review_count)
       }))
       .sort((a, b) => b.rank_score - a.rank_score)
       .slice(0, 3);
@@ -147,7 +147,7 @@ router.get('/:id', async (req, res) => {
     }
 
     const reviewsResult = await pool.query(
-      'SELECT * FROM reviews WHERE toilet_id = $1 ORDER BY created_at DESC LIMIT 10',
+      'SELECT id, rating, comment, created_at FROM reviews WHERE toilet_id = $1 ORDER BY created_at DESC LIMIT 10',
       [id]
     );
 
@@ -163,32 +163,42 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/toilets/:id/reviews
- * Submit a review (requires user_id and user_name from Google OAuth).
+ * Submit a thumbs up/down review with optional comment.
  */
 router.post('/:id/reviews', async (req, res) => {
   const { id } = req.params;
-  const { user_id, user_name, rating_cleanliness, rating_accessibility, rating_availability, comment } = req.body;
+  const { fingerprint, rating, comment } = req.body;
 
-  if (!user_id || !rating_cleanliness) {
-    return res.status(400).json({ error: 'user_id and rating_cleanliness are required' });
+  if (!fingerprint || (rating !== 0 && rating !== 1)) {
+    return res.status(400).json({ error: 'fingerprint and rating (0 or 1) are required' });
+  }
+
+  if (comment && comment.length > 200) {
+    return res.status(400).json({ error: 'Comment must be 200 characters or less' });
   }
 
   try {
+    // Check if this fingerprint already reviewed this toilet
+    const existing = await pool.query(
+      'SELECT id FROM reviews WHERE fingerprint = $1 AND toilet_id = $2',
+      [fingerprint, id]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Already reviewed this toilet' });
+    }
+
     const result = await pool.query(
-      `INSERT INTO reviews (toilet_id, user_id, user_name, rating_cleanliness, rating_accessibility, rating_availability, comment)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [id, user_id, user_name, rating_cleanliness, rating_accessibility || null, rating_availability || null, comment || null]
+      `INSERT INTO reviews (toilet_id, fingerprint, rating, comment)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, rating, comment, created_at`,
+      [id, fingerprint, rating, comment || null]
     );
 
-    // Update toilet average rating
+    // Update toilet aggregates
     await pool.query(`
       UPDATE toilets SET
-        average_rating = (
-          SELECT AVG((rating_cleanliness + COALESCE(rating_accessibility, rating_cleanliness) + COALESCE(rating_availability, rating_cleanliness)) / 3.0)
-          FROM reviews WHERE toilet_id = $1
-        ),
         review_count = (SELECT COUNT(*) FROM reviews WHERE toilet_id = $1),
+        positive_percentage = COALESCE((SELECT ROUND(AVG(rating) * 100) FROM reviews WHERE toilet_id = $1), 0),
         updated_at = NOW()
       WHERE id = $1
     `, [id]);

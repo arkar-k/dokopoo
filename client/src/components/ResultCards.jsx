@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
+import ReviewModal from './ReviewModal';
 
 export default function ResultCards({ results, expanded, radiusUsed, onBack, onSelectIndex }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showReview, setShowReview] = useState(false);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -108,9 +110,30 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
               {current.is_gender_neutral && <span style={styles.tag}>GENDER NEUTRAL</span>}
             </div>
 
-            <button style={styles.navButton} onClick={() => openNavigation(current)}>
-              NAVIGATE
-            </button>
+            <div style={styles.reviewSection}>
+              <span style={styles.reviewLabel}>Dokopoo user recommendation</span>
+              {current.review_count > 0 ? (
+                <div style={styles.reviewSummary}>
+                  <span style={styles.reviewPercent}>
+                    {current.positive_percentage >= 50 ? '😊' : '😞'} {Math.round(current.positive_percentage)}%
+                  </span>
+                  <span style={styles.reviewCount}>
+                    ({current.review_count} {current.review_count === 1 ? 'review' : 'reviews'})
+                  </span>
+                </div>
+              ) : (
+                <span style={styles.noRatings}>No ratings yet</span>
+              )}
+            </div>
+
+            <div style={styles.buttonRow}>
+              <button style={styles.rateButton} onClick={() => setShowReview(true)}>
+                RATE
+              </button>
+              <button style={styles.navButton} onClick={() => openNavigation(current)}>
+                NAVIGATE
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -136,6 +159,16 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
           New Search
         </button>
       </div>
+
+      {showReview && (
+        <ReviewModal
+          key={current.id}
+          toiletId={current.id}
+          toiletName={current.name || 'Public Toilet'}
+          onClose={() => setShowReview(false)}
+          onSubmitted={() => setShowReview(false)}
+        />
+      )}
     </div>
   );
 }
@@ -272,16 +305,62 @@ const styles = {
     fontWeight: '800',
     letterSpacing: '0.5px'
   },
+  reviewSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  reviewLabel: {
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    fontWeight: '700'
+  },
+  noRatings: {
+    fontSize: '13px',
+    color: 'var(--text-muted)',
+    fontStyle: 'italic'
+  },
+  reviewSummary: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  reviewPercent: {
+    fontSize: '16px',
+    fontWeight: '800',
+    color: 'var(--accent)'
+  },
+  reviewCount: {
+    fontSize: '13px',
+    color: 'var(--text-muted)'
+  },
+  buttonRow: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '4px'
+  },
+  rateButton: {
+    flex: '0 0 auto',
+    padding: '14px 18px',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    fontSize: '14px',
+    fontWeight: '800',
+    letterSpacing: '1px',
+    borderRadius: '10px',
+    border: '1px solid #444'
+  },
   navButton: {
-    width: '100%',
+    flex: 1,
     padding: '14px',
     background: 'var(--accent)',
     color: '#000',
     fontSize: '16px',
     fontWeight: '900',
     letterSpacing: '2px',
-    borderRadius: '10px',
-    marginTop: '4px'
+    borderRadius: '10px'
   },
   dots: {
     display: 'flex',
