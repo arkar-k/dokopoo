@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
-    "seed": "node seeds/fetchOSM.js"
+    "dev": "node --env-file=.env --watch src/index.js",
+    "start": "node --env-file=.env src/index.js",
+    "seed": "node --env-file=.env seeds/fetchOSM.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
