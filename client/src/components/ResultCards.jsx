@@ -62,7 +62,6 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
               <span style={styles.rank}>#{currentIndex + 1}</span>
               <h2 style={styles.name}>{current.name || 'Public Toilet'}</h2>
             </div>
-            <span style={styles.badge}>{current.venue_type}</span>
           </div>
 
           <div style={styles.locationInfo}>
@@ -228,16 +227,6 @@ const styles = {
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis'
-  },
-  badge: {
-    background: 'var(--surface)',
-    color: 'var(--text-muted)',
-    padding: '3px 8px',
-    borderRadius: '10px',
-    fontSize: '10px',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    flexShrink: 0
   },
   locationInfo: {
     display: 'flex',
