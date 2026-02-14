@@ -6,18 +6,21 @@ import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Central Tokyo bounding box (Shibuya, Shinjuku, Chiyoda, Minato, Taito areas)
+// Tokyo 23 Wards (23区) bounding box
+// Covers: Chiyoda, Chuo, Minato, Shinjuku, Bunkyo, Taito, Sumida, Koto,
+// Shinagawa, Meguro, Ota, Setagaya, Shibuya, Nakano, Suginami, Toshima,
+// Kita, Arakawa, Itabashi, Nerima, Adachi, Katsushika, Edogawa
 const TOKYO_BBOX = {
-  south: 35.63,
-  west: 139.68,
-  north: 35.73,
-  east: 139.82
+  south: 35.53,  // Ota area
+  west: 139.56,  // Setagaya/Suginami area
+  north: 35.82,  // Adachi/Kita area
+  east: 139.92   // Edogawa area
 };
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
 const query = `
-[out:json][timeout:120];
+[out:json][timeout:300];
 (
   node["amenity"="toilets"](${TOKYO_BBOX.south},${TOKYO_BBOX.west},${TOKYO_BBOX.north},${TOKYO_BBOX.east});
   way["amenity"="toilets"](${TOKYO_BBOX.south},${TOKYO_BBOX.west},${TOKYO_BBOX.north},${TOKYO_BBOX.east});
