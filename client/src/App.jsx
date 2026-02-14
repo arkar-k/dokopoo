@@ -79,17 +79,17 @@ export default function App() {
       <div style={styles.overlay}>
         {state === 'idle' && <FindButton onFind={handleFind} />}
         {state === 'loading' && <LoadingView />}
-        {state === 'results' && (
-          <ResultCards
-            results={results}
-            expanded={expanded}
-            radiusUsed={radiusUsed}
-            onBack={handleReset}
-            onSelectIndex={setSelectedIndex}
-          />
-        )}
         {state === 'error' && <ErrorView message={error} onRetry={handleFind} onBack={handleReset} />}
       </div>
+      {state === 'results' && (
+        <ResultCards
+          results={results}
+          expanded={expanded}
+          radiusUsed={radiusUsed}
+          onBack={handleReset}
+          onSelectIndex={setSelectedIndex}
+        />
+      )}
     </div>
   );
 }

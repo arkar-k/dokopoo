@@ -39,9 +39,14 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
 
   return (
     <div style={styles.container}>
+      {/* Drag handle */}
+      <div style={styles.handleBar}>
+        <div style={styles.handle} />
+      </div>
+
       {expanded && (
         <div style={styles.expandedNotice}>
-          Nothing within 500m — showing nearest at {radiusUsed}m
+          Showing nearest at {radiusUsed}m
         </div>
       )}
 
@@ -52,112 +57,86 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
         onTouchEnd={handleTouchEnd}
       >
         <div style={styles.card}>
-          <div style={styles.photoPlaceholder}>
-            <span style={styles.photoIcon}>📷</span>
-            <span style={styles.photoText}>Photo coming soon</span>
+          <div style={styles.cardHeader}>
+            <div style={styles.headerLeft}>
+              <span style={styles.rank}>#{currentIndex + 1}</span>
+              <h2 style={styles.name}>{current.name || 'Public Toilet'}</h2>
+            </div>
+            <span style={styles.badge}>{current.venue_type}</span>
           </div>
 
-          <div style={styles.cardContent}>
-            <div style={styles.cardHeader}>
-              <span style={styles.rank}>#{currentIndex + 1}</span>
-              <span style={styles.badge}>{current.venue_type}</span>
-            </div>
-
-            <h2 style={styles.name}>
-              {current.name || 'Public Toilet'}
-            </h2>
-
+          <div style={styles.locationInfo}>
             {current.building_name && (
-              <div style={styles.locationRow}>
-                <span style={styles.locationIcon}>🏢</span>
-                <span style={styles.locationText}>{current.building_name}</span>
-              </div>
+              <span style={styles.locationText}>🏢 {current.building_name}</span>
             )}
-
             {current.address && (
-              <div style={styles.locationRow}>
-                <span style={styles.locationIcon}>📍</span>
-                <span style={styles.locationText}>{current.address}</span>
-              </div>
+              <span style={styles.locationText}>📍 {current.address}</span>
             )}
-
             {current.floor_level && (
-              <div style={styles.locationRow}>
-                <span style={styles.locationIcon}>🪜</span>
-                <span style={styles.locationText}>Floor {current.floor_level}</span>
+              <span style={styles.locationText}>🪜 Floor {current.floor_level}</span>
+            )}
+          </div>
+
+          <div style={styles.statsRow}>
+            <div style={styles.stat}>
+              <span style={styles.statValue}>{current.distance_m}m</span>
+              <span style={styles.statLabel}>away</span>
+            </div>
+            <div style={styles.stat}>
+              <span style={styles.statValue}>{current.walk_time_min}min</span>
+              <span style={styles.statLabel}>walk</span>
+            </div>
+            <div style={styles.stat}>
+              <span style={styles.statValue}>{current.quality_score?.toFixed(1)}</span>
+              <span style={styles.statLabel}>score</span>
+            </div>
+            {current.review_count > 0 && (
+              <div style={styles.stat}>
+                <span style={styles.statValue}>
+                  {current.positive_percentage >= 50 ? '👍' : '👎'} {Math.round(current.positive_percentage)}%
+                </span>
+                <span style={styles.statLabel}>{current.review_count} reviews</span>
               </div>
             )}
+          </div>
 
-            <div style={styles.stats}>
-              <div style={styles.stat}>
-                <span style={styles.statValue}>{current.distance_m}m</span>
-                <span style={styles.statLabel}>distance</span>
-              </div>
-              <div style={styles.stat}>
-                <span style={styles.statValue}>{current.walk_time_min} min</span>
-                <span style={styles.statLabel}>walk</span>
-              </div>
-              <div style={styles.stat}>
-                <span style={styles.statValue}>{current.quality_score?.toFixed(1)}</span>
-                <span style={styles.statLabel}>score</span>
-              </div>
-            </div>
+          <div style={styles.tags}>
+            {current.is_free && <span style={styles.tag}>FREE</span>}
+            {current.is_accessible && <span style={styles.tag}>♿</span>}
+            {current.has_baby_change && <span style={styles.tag}>🍼</span>}
+            {current.is_gender_neutral && <span style={styles.tag}>⚧</span>}
+          </div>
 
-            <div style={styles.tags}>
-              {current.is_free && <span style={styles.tag}>FREE</span>}
-              {current.is_accessible && <span style={styles.tag}>ACCESSIBLE</span>}
-              {current.has_baby_change && <span style={styles.tag}>BABY CHANGE</span>}
-              {current.is_gender_neutral && <span style={styles.tag}>GENDER NEUTRAL</span>}
-            </div>
-
-            <div style={styles.reviewSection}>
-              <span style={styles.reviewLabel}>Dokopoo user recommendation</span>
-              {current.review_count > 0 ? (
-                <div style={styles.reviewSummary}>
-                  <span style={styles.reviewPercent}>
-                    {current.positive_percentage >= 50 ? '😊' : '😞'} {Math.round(current.positive_percentage)}%
-                  </span>
-                  <span style={styles.reviewCount}>
-                    ({current.review_count} {current.review_count === 1 ? 'review' : 'reviews'})
-                  </span>
-                </div>
-              ) : (
-                <span style={styles.noRatings}>No ratings yet</span>
-              )}
-            </div>
-
-            <div style={styles.buttonRow}>
-              <button style={styles.rateButton} onClick={() => setShowReview(true)}>
-                RATE
-              </button>
-              <button style={styles.navButton} onClick={() => openNavigation(current)}>
-                NAVIGATE
-              </button>
-            </div>
+          <div style={styles.buttonRow}>
+            <button style={styles.rateButton} onClick={() => setShowReview(true)}>
+              RATE
+            </button>
+            <button style={styles.navButton} onClick={() => openNavigation(current)}>
+              NAVIGATE
+            </button>
           </div>
         </div>
       </div>
 
-      <div style={styles.dots}>
-        {results.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              ...styles.dot,
-              background: i === currentIndex ? 'var(--accent)' : 'var(--text-muted)'
-            }}
-            onClick={() => setCurrentIndex(i)}
-          />
-        ))}
-      </div>
-
       <div style={styles.footer}>
-        <span style={styles.swipeHint}>
-          {results.length > 1 ? 'Swipe for more options' : ''}
-        </span>
         <button style={styles.backButton} onClick={onBack}>
-          New Search
+          ← New Search
         </button>
+        <div style={styles.dots}>
+          {results.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                ...styles.dot,
+                background: i === currentIndex ? 'var(--accent)' : 'rgba(255,255,255,0.3)'
+              }}
+              onClick={() => setCurrentIndex(i)}
+            />
+          ))}
+        </div>
+        <span style={styles.swipeHint}>
+          {results.length > 1 ? 'Swipe ←→' : ''}
+        </span>
       </div>
 
       {showReview && (
@@ -175,219 +154,184 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
 
 const styles = {
   container: {
-    width: '100%',
-    maxWidth: '400px',
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '33vh',
+    minHeight: '220px',
+    maxHeight: '280px',
+    background: 'var(--card)',
+    borderRadius: '20px 20px 0 0',
+    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.4)',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-    pointerEvents: 'auto'
+    pointerEvents: 'auto',
+    zIndex: 1000
+  },
+  handleBar: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '10px 0 6px'
+  },
+  handle: {
+    width: '36px',
+    height: '4px',
+    background: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: '2px'
   },
   expandedNotice: {
     background: '#2a2000',
     color: '#ffab00',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    fontSize: '13px',
+    padding: '4px 12px',
+    margin: '0 16px 6px',
+    borderRadius: '6px',
+    fontSize: '11px',
     fontWeight: '600',
     textAlign: 'center'
   },
   cardArea: {
-    width: '100%',
-    touchAction: 'pan-y'
+    flex: 1,
+    overflow: 'hidden',
+    touchAction: 'pan-y',
+    padding: '0 16px'
   },
   card: {
-    background: 'var(--card)',
-    borderRadius: '16px',
-    overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    maxHeight: '70vh',
-    overflowY: 'auto'
-  },
-  photoPlaceholder: {
-    width: '100%',
-    height: '120px',
-    background: 'var(--surface)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '6px'
-  },
-  photoIcon: {
-    fontSize: '28px',
-    opacity: 0.5
-  },
-  photoText: {
-    fontSize: '12px',
-    color: 'var(--text-muted)',
-    fontWeight: '500'
-  },
-  cardContent: {
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
+    gap: '8px',
+    height: '100%'
   },
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'flex-start',
+    gap: '10px'
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flex: 1,
+    minWidth: 0
   },
   rank: {
     color: 'var(--accent)',
-    fontSize: '14px',
-    fontWeight: '800'
+    fontSize: '13px',
+    fontWeight: '800',
+    flexShrink: 0
+  },
+  name: {
+    fontSize: '16px',
+    fontWeight: '700',
+    margin: 0,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
   },
   badge: {
     background: 'var(--surface)',
     color: 'var(--text-muted)',
-    padding: '4px 10px',
-    borderRadius: '12px',
-    fontSize: '11px',
+    padding: '3px 8px',
+    borderRadius: '10px',
+    fontSize: '10px',
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px'
-  },
-  name: {
-    fontSize: '20px',
-    fontWeight: '800',
-    lineHeight: '1.2',
-    margin: 0
-  },
-  locationRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  },
-  locationIcon: {
-    fontSize: '14px',
     flexShrink: 0
   },
-  locationText: {
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-    fontWeight: '500',
-    lineHeight: '1.3'
-  },
-  stats: {
+  locationInfo: {
     display: 'flex',
-    gap: '24px',
-    marginTop: '4px'
+    flexWrap: 'wrap',
+    gap: '6px 12px'
+  },
+  locationText: {
+    fontSize: '12px',
+    color: 'var(--text-muted)',
+    fontWeight: '500'
+  },
+  statsRow: {
+    display: 'flex',
+    gap: '16px',
+    flexWrap: 'wrap'
   },
   stat: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px'
+    gap: '1px'
   },
   statValue: {
-    fontSize: '22px',
+    fontSize: '16px',
     fontWeight: '800'
   },
   statLabel: {
-    fontSize: '11px',
+    fontSize: '9px',
     color: 'var(--text-muted)',
     textTransform: 'uppercase',
-    letterSpacing: '1px'
+    letterSpacing: '0.5px'
   },
   tags: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '6px'
+    gap: '5px'
   },
   tag: {
     background: 'rgba(0, 230, 118, 0.15)',
     color: 'var(--accent)',
-    padding: '4px 8px',
+    padding: '3px 6px',
     borderRadius: '4px',
     fontSize: '10px',
-    fontWeight: '800',
-    letterSpacing: '0.5px'
-  },
-  reviewSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
-  },
-  reviewLabel: {
-    fontSize: '11px',
-    color: 'var(--text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
     fontWeight: '700'
-  },
-  noRatings: {
-    fontSize: '13px',
-    color: 'var(--text-muted)',
-    fontStyle: 'italic'
-  },
-  reviewSummary: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
-  reviewPercent: {
-    fontSize: '16px',
-    fontWeight: '800',
-    color: 'var(--accent)'
-  },
-  reviewCount: {
-    fontSize: '13px',
-    color: 'var(--text-muted)'
   },
   buttonRow: {
     display: 'flex',
-    gap: '10px',
-    marginTop: '4px'
+    gap: '8px'
   },
   rateButton: {
-    flex: '0 0 auto',
-    padding: '14px 18px',
+    padding: '10px 14px',
     background: 'var(--surface)',
     color: 'var(--text)',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: '800',
-    letterSpacing: '1px',
-    borderRadius: '10px',
+    letterSpacing: '0.5px',
+    borderRadius: '8px',
     border: '1px solid #444'
   },
   navButton: {
     flex: 1,
-    padding: '14px',
+    padding: '10px 14px',
     background: 'var(--accent)',
     color: '#000',
-    fontSize: '16px',
-    fontWeight: '900',
-    letterSpacing: '2px',
-    borderRadius: '10px'
-  },
-  dots: {
-    display: 'flex',
-    gap: '8px'
-  },
-  dot: {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    cursor: 'pointer'
+    fontSize: '14px',
+    fontWeight: '800',
+    letterSpacing: '1px',
+    borderRadius: '8px'
   },
   footer: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%'
-  },
-  swipeHint: {
-    color: 'var(--text-muted)',
-    fontSize: '12px'
+    padding: '8px 16px 12px',
+    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
   },
   backButton: {
     background: 'transparent',
     color: 'var(--text-muted)',
-    fontSize: '14px',
+    fontSize: '12px',
     fontWeight: '600',
-    textDecoration: 'underline',
-    padding: '8px'
+    padding: '4px 0'
+  },
+  dots: {
+    display: 'flex',
+    gap: '6px'
+  },
+  dot: {
+    width: '7px',
+    height: '7px',
+    borderRadius: '50%',
+    cursor: 'pointer'
+  },
+  swipeHint: {
+    color: 'var(--text-muted)',
+    fontSize: '11px'
   }
 };
