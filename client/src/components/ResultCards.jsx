@@ -13,6 +13,7 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
   const touchEndX = useRef(0);
   const isSwiping = useRef(false);
   const lastSwipeTime = useRef(0);
+  const mouseDown = useRef(false);
 
   useEffect(() => {
     if (onSelectIndex) onSelectIndex(currentIndex);
@@ -34,6 +35,9 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
   }
 
   function handleTouchEnd() {
+    // Only process swipe if actual dragging movement was detected
+    if (!isSwiping.current) return;
+
     const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > SWIPE_THRESHOLD) {
       lastSwipeTime.current = Date.now();
@@ -43,6 +47,27 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
         setCurrentIndex(currentIndex - 1);
       }
     }
+  }
+
+  function handleMouseDown(e) {
+    mouseDown.current = true;
+    touchStartX.current = e.clientX;
+    touchEndX.current = e.clientX;
+    isSwiping.current = false;
+  }
+
+  function handleMouseMove(e) {
+    if (!mouseDown.current) return;
+    touchEndX.current = e.clientX;
+    if (Math.abs(touchEndX.current - touchStartX.current) > TAP_TOLERANCE) {
+      isSwiping.current = true;
+    }
+  }
+
+  function handleMouseUp() {
+    if (!mouseDown.current) return;
+    mouseDown.current = false;
+    handleTouchEnd();
   }
 
   function isSwipeActive() {
@@ -75,6 +100,10 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => { mouseDown.current = false; }}
       >
         <div style={styles.card}>
           <div style={styles.cardHeader}>
