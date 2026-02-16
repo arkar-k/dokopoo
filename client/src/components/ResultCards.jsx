@@ -1,11 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import ReviewModal from './ReviewModal';
 
+const SWIPE_THRESHOLD = 50;  // min px to count as swipe
+const TAP_TOLERANCE = 10;    // max px movement for a clean tap
+const SWIPE_COOLDOWN = 300;  // ms to ignore taps after a swipe
+
 export default function ResultCards({ results, expanded, radiusUsed, onBack, onSelectIndex }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchEndX = useRef(0);
+  const isSwiping = useRef(false);
+  const lastSwipeTime = useRef(0);
 
   useEffect(() => {
     if (onSelectIndex) onSelectIndex(currentIndex);
@@ -13,15 +20,23 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
 
   function handleTouchStart(e) {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchEndX.current = e.touches[0].clientX;
+    isSwiping.current = false;
   }
 
   function handleTouchMove(e) {
     touchEndX.current = e.touches[0].clientX;
+    const dx = Math.abs(touchEndX.current - touchStartX.current);
+    if (dx > TAP_TOLERANCE) {
+      isSwiping.current = true;
+    }
   }
 
   function handleTouchEnd() {
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 50) {
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      lastSwipeTime.current = Date.now();
       if (diff > 0 && currentIndex < results.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else if (diff < 0 && currentIndex > 0) {
@@ -30,7 +45,12 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
     }
   }
 
+  function isSwipeActive() {
+    return isSwiping.current || (Date.now() - lastSwipeTime.current < SWIPE_COOLDOWN);
+  }
+
   function openNavigation(toilet) {
+    if (isSwipeActive()) return;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${toilet.latitude},${toilet.longitude}&travelmode=walking`;
     window.open(url, '_blank');
   }
@@ -107,7 +127,7 @@ export default function ResultCards({ results, expanded, radiusUsed, onBack, onS
           </div>
 
           <div style={styles.buttonRow}>
-            <button style={styles.rateButton} onClick={() => setShowReview(true)}>
+            <button style={styles.rateButton} onClick={() => { if (!isSwipeActive()) setShowReview(true); }}>
               RATE
             </button>
             <button style={styles.navButton} onClick={() => openNavigation(current)}>
